@@ -24,14 +24,11 @@ use warnings;
 
 # Also uses Carp but loads it on demand to reduce memory usage.
 
-use Exporter;
-
-# use Exporter plus @ISA instead of use base to reduce memory usage.
-## no critic (ClassHierarchies::ProhibitExplicitISA)
+use Exporter qw(import);
 
 # Declare variables that should be set in BEGIN for robustness.
 ## no critic (Modules::ProhibitAutomaticExportation)
-our (@EXPORT, @EXPORT_OK, %EXPORT_TAGS, @ISA);
+our (@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 # We use autoloading, which sets this variable to the name of the called sub.
 our $AUTOLOAD;
@@ -69,7 +66,6 @@ BEGIN {
     }
 
     # Exported symbol configuration.
-    @ISA = qw(Exporter);
     @EXPORT = qw(color colored);
     @EXPORT_OK = qw(uncolor colorstrip colorvalid coloralias);
     %EXPORT_TAGS = (
@@ -636,10 +632,10 @@ Term::ANSIColor - Color screen output using ANSI escape sequences
 =for stopwords
 cyan colorize namespace runtime TMTOWTDI cmd.exe cmd.exe. 4nt.exe. 4nt.exe
 command.com NT ESC Delvare SSH OpenSSH aixterm ECMA-048 Fraktur overlining
-Zenin reimplemented Allbery PUSHCOLOR POPCOLOR LOCALCOLOR openmethods.com
-openmethods.com. grey ATTR urxvt mistyped prepending Bareword filehandle
-Cygwin Starsinic aterm rxvt CPAN RGB Solarized Whitespace alphanumerics
-undef CLICOLOR NNN GGG RRR strikethrough truecolor
+Zenin reimplemented Allbery PUSHCOLOR POPCOLOR LOCALCOLOR openmethods.com grey
+ATTR urxvt mistyped prepending Bareword filehandle Cygwin Starsinic aterm rxvt
+CPAN RGB Solarized Whitespace alphanumerics undef CLICOLOR NNN GGG RRR
+strikethrough truecolor Nicol
 
 =head1 SYNOPSIS
 
@@ -1362,8 +1358,8 @@ Allbery <rra@cpan.org>, and then combined with the original idea by
 Russ with input from Zenin.  256-color support is based on work by Kurt
 Starsinic.  Russ Allbery now maintains this module.
 
-PUSHCOLOR, POPCOLOR, and LOCALCOLOR were contributed by openmethods.com
-voice solutions.
+PUSHCOLOR, POPCOLOR, and LOCALCOLOR, by David Nicol, were contributed by
+openmethods.com voice solutions.
 
 =head1 COPYRIGHT AND LICENSE
 
