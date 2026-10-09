@@ -10,7 +10,7 @@
 use 5.012;
 use warnings;
 
-use Test::More tests => 169;
+use Test::More tests => 171;
 
 # Load the module.
 BEGIN {
@@ -33,6 +33,10 @@ is(
     'Constants with commas',
 );
 is((BLUE 'test', 'ing'), "\e[34mtesting", 'Constants with multiple strings');
+
+# Test colored with no attributes.
+is(colored('testing'), 'testing', 'colored with no attributes');
+is(colored([], 'testing'), 'testing', '...empty array');
 
 # Test case variations on attributes.
 is(color('Blue BOLD', 'on_GReeN'), "\e[34;1;42m", 'Attribute case');
@@ -69,12 +73,12 @@ is(
 # Basic tests for uncolor.
 is_deeply(
     [uncolor('1;42', "\e[m", q{}, "\e[0m")],
-    [qw(bold on_green clear)],
+    [qw(bold on_green clear clear clear)],
     'uncolor',
 );
 is_deeply([uncolor("\e[01m")], ['bold'], 'uncolor("\\e[01m")');
-is_deeply([uncolor("\e[m")], [], 'uncolor("\\e[m")');
-is_deeply([uncolor(q{})], [], 'uncolor("")');
+is_deeply([uncolor("\e[m")], ['clear'], 'uncolor("\\e[m")');
+is_deeply([uncolor(q{})], ['clear'], 'uncolor("")');
 
 # Several tests for ANSI_COLORS_DISABLED.
 local $ENV{ANSI_COLORS_DISABLED} = 1;
@@ -112,12 +116,12 @@ is(
     'testing',
     'colored support for NO_COLOR',
 );
-is((BLUE 'testing'), 'testing', 'Constant support for NO_COLOR');
+is((RED 'testing'), 'testing', 'Constant support for NO_COLOR');
 local $ENV{NO_COLOR} = q{};
-is(color('blue'), q{}, 'color support for NO_COLOR with empty string');
+is(color('blue'), qq{\e[34m}, 'color support for NO_COLOR with empty string');
 is(
     (RED 'testing'),
-    'testing',
+    "\e[31mtesting",
     'Constant support for NO_COLOR with empty string',
 );
 delete $ENV{NO_COLOR};

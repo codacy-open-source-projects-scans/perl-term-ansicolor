@@ -38,6 +38,7 @@ our $AUTOLOAD;
 # consistency is good).
 BEGIN {
     # All of the basic supported constants, used in %EXPORT_TAGS.
+    #<<<
     my @colorlist = qw(
         CLEAR           RESET             BOLD            DARK
         FAINT           ITALIC            UNDERLINE       UNDERSCORE
@@ -53,6 +54,7 @@ BEGIN {
         ON_BRIGHT_BLACK ON_BRIGHT_RED     ON_BRIGHT_GREEN ON_BRIGHT_YELLOW
         ON_BRIGHT_BLUE  ON_BRIGHT_MAGENTA ON_BRIGHT_CYAN  ON_BRIGHT_WHITE
     );
+    #>>>
 
     # 256-color constants, used in %EXPORT_TAGS.
     my @colorlist256 = (
@@ -268,7 +270,7 @@ sub AUTOLOAD {
 
     # If colors are disabled, just return the input.  Do this without
     # installing a sub for (marginal, unbenchmarked) speed.
-    if ($ENV{ANSI_COLORS_DISABLED} || defined($ENV{NO_COLOR})) {
+    if ($ENV{ANSI_COLORS_DISABLED} || length($ENV{NO_COLOR})) {
         return join(q{}, @_);
     }
 
@@ -290,7 +292,7 @@ sub AUTOLOAD {
     ## no critic (ValuesAndExpressions::ProhibitImplicitNewlines)
     my $eval_result = eval qq{
         sub $AUTOLOAD {
-            if (\$ENV{ANSI_COLORS_DISABLED} || defined(\$ENV{NO_COLOR})) {
+            if (\$ENV{ANSI_COLORS_DISABLED} || length(\$ENV{NO_COLOR})) {
                 return join(q{}, \@_);
             } elsif (\$AUTOLOCAL && \@_) {
                 return PUSHCOLOR('$escape') . join(q{}, \@_) . POPCOLOR;
@@ -314,7 +316,7 @@ sub AUTOLOAD {
     $@ = $eval_err;
 
     # Dispatch to the newly-created sub.
-    goto &$AUTOLOAD;
+    goto &{$AUTOLOAD};
 }
 ## use critic
 
@@ -388,7 +390,7 @@ sub color {
     my (@codes) = @_;
 
     # Return the empty string if colors are disabled.
-    if ($ENV{ANSI_COLORS_DISABLED} || defined($ENV{NO_COLOR})) {
+    if ($ENV{ANSI_COLORS_DISABLED} || length($ENV{NO_COLOR})) {
         return q{};
     }
 
@@ -425,10 +427,8 @@ sub color {
 
 # Return a list of named color attributes for a given set of escape codes.
 # Escape sequences can be given with or without enclosing "\e[" and "m".  The
-# empty escape sequence '' or "\e[m" gives an empty list of attrs.
-#
-# There is one special case.  256-color codes start with 38 or 48, followed by
-# a 5 and then the 256-color code.
+# empty escape sequence '' or "\e[m" returns reset.  256-color codes start
+# with 38 or 48, followed by a 5 and then the 256-color code.
 #
 # @escapes - A list of escape sequences or escape sequence numbers
 #
@@ -445,6 +445,12 @@ sub uncolor {
         my ($attrs) = $escape =~ m{ \A ((?:\d+;)* \d*) \z }xms;
         if (!defined($attrs)) {
             croak("Bad escape sequence $escape");
+        }
+
+        # Special-case the empty string, which is the same as 0 (clear).
+        if ($attrs eq q{}) {
+            push(@nums, '0');
+            next;
         }
 
         # Pull off 256-color codes (38;5;n or 48;5;n) and truecolor codes
@@ -513,7 +519,12 @@ sub colored {
     }
 
     # Return the string unmolested if colors are disabled.
-    if ($ENV{ANSI_COLORS_DISABLED} || defined($ENV{NO_COLOR})) {
+    if ($ENV{ANSI_COLORS_DISABLED} || length($ENV{NO_COLOR})) {
+        return $string;
+    }
+
+    # Likewise if there are no codes.
+    if (!@codes) {
         return $string;
     }
 
@@ -648,7 +659,7 @@ strikethrough truecolor Nicol
     print "This text is normal.\n";
     print colored(['yellow on_magenta'], 'Yellow on magenta.', "\n");
     print colored(['red on_bright_yellow'], 'Red on bright yellow.', "\n");
-    print colored(['bright_red on_black'], 'Bright red on black.', "\n");
+    print colored(['bright_red', 'on_black'], 'Bright red on black.', "\n");
     print "\n";
 
     # Map escape sequences back to color names.
@@ -1201,12 +1212,12 @@ escape sequences.
 
 =item NO_COLOR
 
-If this environment variable is set to any value, it suppresses generation of
-escape sequences the same as if ANSI_COLORS_DISABLED is set to a true value.
-This implements the L<https://no-color.org/> informal standard.  Programs that
-want to enable color despite NO_COLOR being set will need to unset that
-environment variable before any constant or function provided by this module
-is used.
+If this environment variable is set to any value other than the empty string,
+it suppresses generation of escape sequences the same as if
+ANSI_COLORS_DISABLED is set to a true value.  This implements the
+L<https://no-color.org/> informal standard.  Programs that want to enable
+color despite NO_COLOR being set will need to unset that environment variable
+before any constant or function provided by this module is used.
 
 =back
 
